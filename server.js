@@ -16,7 +16,7 @@ const app = express();
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: ['https://vaultx-frontend.vercel.app', 'https://vaultx-admin.vercel.app', 'http://localhost:3000', 'http://localhost:3001'],
+  origin: true,
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
