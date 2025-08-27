@@ -13,6 +13,9 @@ const kycRoutes = require('./routes/kyc');
 
 const app = express();
 
+// Trust proxy for Railway
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
