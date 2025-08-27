@@ -179,22 +179,16 @@ exports.reviewKYC = async (req, res) => {
     const { kycId } = req.params;
     const { status, adminNotes } = req.body;
     
-    const kyc = await KYC.findById(kycId);
+    // Simple update without complex logic
+    const kyc = await KYC.findByIdAndUpdate(kycId, {
+      status,
+      adminNotes,
+      reviewedAt: new Date()
+    }, { new: true });
+    
     if (!kyc) {
       return res.status(404).json({ message: 'KYC record not found' });
     }
-    
-    kyc.status = status;
-    kyc.adminNotes = adminNotes;
-    kyc.reviewedAt = new Date();
-    kyc.reviewedBy = 'admin-id';
-    await kyc.save();
-    
-    // Update user status
-    const user = await User.findById(kyc.userId);
-    user.kycStatus = status;
-    user.canTrade = status === 'approved';
-    await user.save();
     
     res.json({ message: 'KYC reviewed successfully', kyc });
   } catch (error) {
