@@ -14,8 +14,12 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Get user IP address
-    const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    // Get user IP address (handle proxies and load balancers)
+    const ipAddress = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 
+                     req.headers['x-real-ip'] || 
+                     req.ip || 
+                     req.connection.remoteAddress || 
+                     '127.0.0.1';
 
     const user = await User.create({ 
       name, 
