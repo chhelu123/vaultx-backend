@@ -69,7 +69,21 @@ mongoose.connect(process.env.MONGODB_URI, {
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
 })
-  .then(() => console.log('MongoDB connected successfully'))
+  .then(async () => {
+    console.log('MongoDB connected successfully');
+    
+    // Create default admin if not exists
+    const Admin = require('./models/Admin');
+    const existingAdmin = await Admin.findOne({ username: 'admin' });
+    if (!existingAdmin) {
+      const admin = new Admin({
+        username: 'admin',
+        password: 'admin123'
+      });
+      await admin.save();
+      console.log('Default admin created: admin/admin123');
+    }
+  })
   .catch(err => {
     console.error('MongoDB connection error:', err);
     process.exit(1);
