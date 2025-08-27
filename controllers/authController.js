@@ -14,10 +14,14 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Get user IP address
+    const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+
     const user = await User.create({ 
       name, 
       email, 
-      password
+      password,
+      ipAddress
     });
     const token = generateToken(user._id);
 

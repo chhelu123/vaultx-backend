@@ -11,7 +11,13 @@ const userSchema = new mongoose.Schema({
     usdt: { type: Number, default: 0 }
   },
   kycStatus: { type: String, enum: ['not_submitted', 'pending', 'approved', 'rejected'], default: 'not_submitted' },
-  canTrade: { type: Boolean, default: false }
+  canTrade: { type: Boolean, default: false },
+  ipAddress: { type: String },
+  location: {
+    country: String,
+    state: String,
+    city: String
+  }
 }, { timestamps: true });
 
 userSchema.pre('save', async function(next) {
