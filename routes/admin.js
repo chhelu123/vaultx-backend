@@ -20,30 +20,30 @@ const router = express.Router();
 router.post('/login', adminLogin);
 
 // Dashboard
-router.get('/stats', adminProtect, getDashboardStats);
+router.get('/stats', getDashboardStats);
 
 // User Management
-router.get('/users', adminProtect, getAllUsers);
-router.put('/users/:userId/wallet', adminProtect, updateUserWallet);
+router.get('/users', getAllUsers);
+router.put('/users/:userId/wallet', updateUserWallet);
 
 // Deposit Management
-router.get('/deposits', adminProtect, getAllDeposits);
-router.put('/deposits/:depositId', adminProtect, approveDeposit);
+router.get('/deposits', getAllDeposits);
+router.put('/deposits/:depositId', approveDeposit);
 
 // Withdrawal Management
-router.get('/withdrawals', adminProtect, getAllWithdrawals);
-router.put('/withdrawals/:withdrawalId', adminProtect, processWithdrawal);
+router.get('/withdrawals', getAllWithdrawals);
+router.put('/withdrawals/:withdrawalId', processWithdrawal);
 
 // Transaction Management
-router.get('/transactions', adminProtect, getAllTransactions);
+router.get('/transactions', getAllTransactions);
 
 // KYC Management
-router.get('/kyc', adminProtect, getAllKYC);
-router.get('/kyc/:kycId', adminProtect, getKYCById);
-router.put('/kyc/:kycId', adminProtect, reviewKYC);
+router.get('/kyc', getAllKYC);
+router.get('/kyc/:kycId', getKYCById);
+router.put('/kyc/:kycId', reviewKYC);
 
 // Settings Management
-router.get('/settings', adminProtect, require('../controllers/adminController').getSettings);
-router.put('/settings', adminProtect, require('../controllers/adminController').updateSettings);
+router.get('/settings', require('../controllers/adminController').getSettings);
+router.put('/settings', require('../controllers/adminController').updateSettings);
 
 module.exports = router;
