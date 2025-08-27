@@ -78,7 +78,8 @@ mongoose.connect(process.env.MONGODB_URI, {
     if (!existingAdmin) {
       const admin = new Admin({
         username: 'admin',
-        password: 'admin123'
+        password: 'admin123',
+        isActive: true
       });
       await admin.save();
       console.log('Default admin created: admin/admin123');
