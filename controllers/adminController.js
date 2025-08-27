@@ -16,13 +16,13 @@ exports.adminLogin = async (req, res) => {
   try {
     const { username, password } = req.body;
     
-    const admin = await Admin.findOne({ username, isActive: true });
-    if (!admin || !(await admin.comparePassword(password))) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    // Hardcoded admin for now
+    if (username === 'admin' && password === 'admin123') {
+      const token = generateToken('admin-id');
+      return res.json({ token, admin: { id: 'admin-id', username: 'admin' } });
     }
-
-    const token = generateToken(admin._id);
-    res.json({ token, admin: { id: admin._id, username: admin.username } });
+    
+    return res.status(401).json({ message: 'Invalid credentials' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
