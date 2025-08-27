@@ -179,7 +179,6 @@ exports.reviewKYC = async (req, res) => {
     const { kycId } = req.params;
     const { status, adminNotes } = req.body;
     
-    // Simple update without complex logic
     const kyc = await KYC.findByIdAndUpdate(kycId, {
       status,
       adminNotes,
@@ -189,6 +188,12 @@ exports.reviewKYC = async (req, res) => {
     if (!kyc) {
       return res.status(404).json({ message: 'KYC record not found' });
     }
+    
+    // Update user trading permissions
+    await User.findByIdAndUpdate(kyc.userId, {
+      kycStatus: status,
+      canTrade: status === 'approved'
+    });
     
     res.json({ message: 'KYC reviewed successfully', kyc });
   } catch (error) {
