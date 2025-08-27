@@ -17,9 +17,9 @@ exports.adminLogin = async (req, res) => {
     const { username, password } = req.body;
     
     // Hardcoded admin for now
-    if (username === 'admin' && password === 'admin123') {
+    if (username === 'chhelu' && password === 'vaultxindia123') {
       const token = generateToken('admin-id');
-      return res.json({ token, admin: { id: 'admin-id', username: 'admin' } });
+      return res.json({ token, admin: { id: 'admin-id', username: 'chhelu' } });
     }
     
     return res.status(401).json({ message: 'Invalid credentials' });
