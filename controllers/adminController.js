@@ -187,7 +187,7 @@ exports.reviewKYC = async (req, res) => {
     kyc.status = status;
     kyc.adminNotes = adminNotes;
     kyc.reviewedAt = new Date();
-    kyc.reviewedBy = req.admin._id;
+    kyc.reviewedBy = 'admin-id';
     await kyc.save();
     
     // Update user status
