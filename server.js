@@ -5,6 +5,12 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
+// Ensure JWT_SECRET exists
+if (!process.env.JWT_SECRET) {
+  console.error('JWT_SECRET environment variable is required');
+  process.env.JWT_SECRET = 'fallback-secret-key-for-development-only';
+}
+
 const authRoutes = require('./routes/auth');
 const tradingRoutes = require('./routes/trading');
 const walletRoutes = require('./routes/wallet');
