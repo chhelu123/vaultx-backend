@@ -5,13 +5,52 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
-exports.register = async (req, res) => {
+const { sendOTPEmail } = require('../utils/emailService');
+
+// Send OTP for registration
+exports.sendOTP = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { email } = req.body;
     
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Store OTP in memory (in production, use Redis)
+    global.otpStore = global.otpStore || {};
+    global.otpStore[email] = { otp, expiry: otpExpiry };
+
+    // Send OTP via email
+    const emailSent = await sendOTPEmail(email, otp);
+    
+    if (!emailSent) {
+      return res.status(500).json({ message: 'Failed to send OTP email' });
+    }
+
+    res.json({ message: 'OTP sent to your email address' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.register = async (req, res) => {
+  try {
+    const { name, email, password, otp } = req.body;
+    
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Verify OTP
+    const storedOTP = global.otpStore?.[email];
+    if (!storedOTP || storedOTP.otp !== otp || new Date() > storedOTP.expiry) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
     // Get user IP address (handle proxies and load balancers)
@@ -25,8 +64,13 @@ exports.register = async (req, res) => {
       name, 
       email, 
       password,
-      ipAddress
+      ipAddress,
+      isVerified: true
     });
+    
+    // Clear OTP
+    delete global.otpStore[email];
+    
     const token = generateToken(user._id);
 
     res.status(201).json({
