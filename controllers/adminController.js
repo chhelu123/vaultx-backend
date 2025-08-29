@@ -257,8 +257,31 @@ exports.getAllTransactions = async (req, res) => {
 // KYC Management
 exports.getAllKYC = async (req, res) => {
   try {
-    const kycRecords = await KYC.find().populate('userId', 'name email').sort({ createdAt: -1 });
-    res.json(kycRecords);
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
+    const skip = (page - 1) * limit;
+
+    const kycRecords = await KYC.find()
+      .select('-aadharDocument -panDocument')
+      .populate('userId', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+    
+    const total = await KYC.countDocuments();
+    
+    res.json({
+      kyc: kycRecords,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
