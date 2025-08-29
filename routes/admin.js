@@ -46,4 +46,7 @@ router.put('/kyc/:kycId', reviewKYC);
 router.get('/settings', require('../controllers/adminController').getSettings);
 router.put('/settings', require('../controllers/adminController').updateSettings);
 
+// Analytics
+router.get('/analytics', require('../controllers/adminController').getAnalytics);
+
 module.exports = router;

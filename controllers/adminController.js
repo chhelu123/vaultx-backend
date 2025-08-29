@@ -35,6 +35,7 @@ exports.getDashboardStats = async (req, res) => {
     const totalTransactions = await Transaction.countDocuments();
     const pendingDeposits = await Deposit.countDocuments({ status: 'pending' });
     const pendingWithdrawals = await Withdrawal.countDocuments({ status: 'pending' });
+    const pendingKYC = await KYC.countDocuments({ status: 'pending' });
     
     const totalVolume = await Transaction.aggregate([
       { $group: { _id: null, total: { $sum: '$total' } } }
@@ -45,6 +46,7 @@ exports.getDashboardStats = async (req, res) => {
       totalTransactions,
       pendingDeposits,
       pendingWithdrawals,
+      pendingKYC,
       totalVolume: totalVolume[0]?.total || 0
     });
   } catch (error) {
@@ -322,6 +324,95 @@ exports.updateSettings = async (req, res) => {
       await settings.save();
     }
     res.json(settings);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Analytics
+exports.getAnalytics = async (req, res) => {
+  try {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    // User Analytics
+    const totalUsers = await User.countDocuments();
+    const newUsersToday = await User.countDocuments({ createdAt: { $gte: yesterday } });
+    const newUsersWeek = await User.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
+    const newUsersMonth = await User.countDocuments({ createdAt: { $gte: thirtyDaysAgo } });
+
+    // Transaction Analytics
+    const totalTransactions = await Transaction.countDocuments();
+    const transactionsToday = await Transaction.countDocuments({ createdAt: { $gte: yesterday } });
+    const transactionsWeek = await Transaction.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
+    const transactionsMonth = await Transaction.countDocuments({ createdAt: { $gte: thirtyDaysAgo } });
+
+    // Volume Analytics
+    const totalVolume = await Transaction.aggregate([{ $group: { _id: null, total: { $sum: '$total' } } }]);
+    const volumeToday = await Transaction.aggregate([{ $match: { createdAt: { $gte: yesterday } } }, { $group: { _id: null, total: { $sum: '$total' } } }]);
+    const volumeWeek = await Transaction.aggregate([{ $match: { createdAt: { $gte: sevenDaysAgo } } }, { $group: { _id: null, total: { $sum: '$total' } } }]);
+    const volumeMonth = await Transaction.aggregate([{ $match: { createdAt: { $gte: thirtyDaysAgo } } }, { $group: { _id: null, total: { $sum: '$total' } } }]);
+
+    // Deposit/Withdrawal Analytics
+    const totalDeposits = await Deposit.countDocuments({ status: 'completed' });
+    const totalWithdrawals = await Withdrawal.countDocuments({ status: 'completed' });
+    const pendingDeposits = await Deposit.countDocuments({ status: 'pending' });
+    const pendingWithdrawals = await Withdrawal.countDocuments({ status: 'pending' });
+
+    // KYC Analytics
+    const totalKYC = await KYC.countDocuments();
+    const approvedKYC = await KYC.countDocuments({ status: 'approved' });
+    const pendingKYC = await KYC.countDocuments({ status: 'pending' });
+    const rejectedKYC = await KYC.countDocuments({ status: 'rejected' });
+
+    // Daily Transaction Chart Data (Last 7 days)
+    const dailyTransactions = await Transaction.aggregate([
+      { $match: { createdAt: { $gte: sevenDaysAgo } } },
+      { $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+        count: { $sum: 1 },
+        volume: { $sum: '$total' }
+      }},
+      { $sort: { _id: 1 } }
+    ]);
+
+    res.json({
+      users: {
+        total: totalUsers,
+        today: newUsersToday,
+        week: newUsersWeek,
+        month: newUsersMonth
+      },
+      transactions: {
+        total: totalTransactions,
+        today: transactionsToday,
+        week: transactionsWeek,
+        month: transactionsMonth
+      },
+      volume: {
+        total: totalVolume[0]?.total || 0,
+        today: volumeToday[0]?.total || 0,
+        week: volumeWeek[0]?.total || 0,
+        month: volumeMonth[0]?.total || 0
+      },
+      deposits: {
+        total: totalDeposits,
+        pending: pendingDeposits
+      },
+      withdrawals: {
+        total: totalWithdrawals,
+        pending: pendingWithdrawals
+      },
+      kyc: {
+        total: totalKYC,
+        approved: approvedKYC,
+        pending: pendingKYC,
+        rejected: rejectedKYC
+      },
+      dailyChart: dailyTransactions
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
