@@ -4,7 +4,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "create-admin": "node createAdmin.js"
+    "create-admin": "node createAdmin.js",
+    "create-indexes": "node scripts/createIndexes.js",
+    "check-indexes": "node scripts/checkIndexes.js"
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.5",
