@@ -43,8 +43,28 @@ exports.requestDeposit = async (req, res) => {
 
 exports.getDeposits = async (req, res) => {
   try {
-    const deposits = await Deposit.find({ userId: req.user.id }).sort({ createdAt: -1 });
-    res.json(deposits);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const deposits = await Deposit.find({ userId: req.user.id })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    
+    const total = await Deposit.countDocuments({ userId: req.user.id });
+    
+    res.json({
+      deposits,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -78,8 +98,28 @@ exports.requestWithdrawal = async (req, res) => {
 
 exports.getWithdrawals = async (req, res) => {
   try {
-    const withdrawals = await Withdrawal.find({ userId: req.user.id }).sort({ createdAt: -1 });
-    res.json(withdrawals);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const withdrawals = await Withdrawal.find({ userId: req.user.id })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    
+    const total = await Withdrawal.countDocuments({ userId: req.user.id });
+    
+    res.json({
+      withdrawals,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
