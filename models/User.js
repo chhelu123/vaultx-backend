@@ -6,8 +6,9 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   name: { type: String, required: true },
   isVerified: { type: Boolean, default: false },
+  emailVerified: { type: Boolean, default: false },
   wallets: {
-    inr: { type: Number, default: 0 },
+    inr: { type: Number, default: 10000 },
     usdt: { type: Number, default: 0 }
   },
   kycStatus: { type: String, enum: ['not_submitted', 'pending', 'approved', 'rejected'], default: 'not_submitted' },
