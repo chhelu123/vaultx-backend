@@ -96,7 +96,8 @@ exports.sendOTP = async (req, res) => {
     const emailResult = await sendOTPEmail(email, otp, name);
     
     if (!emailResult.success) {
-      return res.status(500).json({ message: 'Failed to send OTP email' });
+      console.error('Email sending failed:', emailResult.error);
+      return res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
     }
     
     res.json({ message: 'OTP sent successfully' });
