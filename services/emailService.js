@@ -42,11 +42,17 @@ const sendOTPEmail = async (email, otp) => {
   };
 
   try {
+    console.log('Sending email via SendGrid to:', email);
+    console.log('From email:', process.env.FROM_EMAIL);
     await sgMail.send(msg);
-    console.log('OTP email sent successfully');
+    console.log('OTP email sent successfully via SendGrid');
     return { success: true };
   } catch (error) {
-    console.error('SendGrid error:', error.response?.body || error.message);
+    console.error('SendGrid error details:', {
+      message: error.message,
+      code: error.code,
+      response: error.response?.body
+    });
     return { success: false, error: error.message };
   }
 };

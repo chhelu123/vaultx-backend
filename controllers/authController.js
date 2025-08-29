@@ -93,12 +93,15 @@ exports.sendOTP = async (req, res) => {
     await EmailOTP.create({ email, otp });
     
     // Send email
-    const emailResult = await sendOTPEmail(email, otp, name);
+    console.log('Attempting to send OTP to:', email);
+    const emailResult = await sendOTPEmail(email, otp);
     
     if (!emailResult.success) {
       console.error('Email sending failed:', emailResult.error);
       return res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
     }
+    
+    console.log('OTP sent successfully to:', email);
     
     res.json({ message: 'OTP sent successfully' });
   } catch (error) {
