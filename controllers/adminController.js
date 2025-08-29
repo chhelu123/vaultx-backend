@@ -58,14 +58,15 @@ exports.getDashboardStats = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
     const skip = (page - 1) * limit;
 
     const users = await User.find()
       .select('-password')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
     
     const total = await User.countDocuments();
     
@@ -109,14 +110,15 @@ exports.updateUserWallet = async (req, res) => {
 exports.getAllDeposits = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
     const skip = (page - 1) * limit;
 
     const deposits = await Deposit.find()
       .populate('userId', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
     
     const total = await Deposit.countDocuments();
     
@@ -166,14 +168,15 @@ exports.approveDeposit = async (req, res) => {
 exports.getAllWithdrawals = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
     const skip = (page - 1) * limit;
 
     const withdrawals = await Withdrawal.find()
       .populate('userId', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
     
     const total = await Withdrawal.countDocuments();
     
@@ -223,14 +226,15 @@ exports.processWithdrawal = async (req, res) => {
 exports.getAllTransactions = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50);
     const skip = (page - 1) * limit;
 
     const transactions = await Transaction.find()
       .populate('userId', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
     
     const total = await Transaction.countDocuments();
     
