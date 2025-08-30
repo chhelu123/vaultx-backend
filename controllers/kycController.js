@@ -4,7 +4,7 @@ const User = require('../models/User');
 // Submit KYC documents
 exports.submitKYC = async (req, res) => {
   try {
-    const { fullName, dateOfBirth, mobileNumber, aadharNumber, panNumber, aadharFrontWithSelfie, aadharBackWithSelfie, panDocument } = req.body;
+    const { fullName, dateOfBirth, mobileNumber, streetAddress, city, state, pincode, aadharNumber, panNumber, aadharFrontWithSelfie, aadharBackWithSelfie, panDocument } = req.body;
     const userId = req.user.id;
 
     // Check if KYC already exists
@@ -19,6 +19,10 @@ exports.submitKYC = async (req, res) => {
       fullName,
       dateOfBirth,
       mobileNumber,
+      streetAddress,
+      city,
+      state,
+      pincode,
       aadharNumber,
       panNumber,
       aadharFrontWithSelfie,

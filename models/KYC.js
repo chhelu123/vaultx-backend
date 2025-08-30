@@ -5,6 +5,10 @@ const kycSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   dateOfBirth: { type: Date, required: true },
   mobileNumber: { type: String, required: true },
+  streetAddress: { type: String, required: true },
+  city: { type: String, required: true },
+  state: { type: String, required: true },
+  pincode: { type: String, required: true },
   aadharNumber: { type: String, required: true },
   panNumber: { type: String, required: true },
   aadharFrontWithSelfie: { type: String, required: true }, // Base64 selfie with front Aadhar
