@@ -262,7 +262,7 @@ exports.getAllKYC = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const kycRecords = await KYC.find()
-      .select('-aadharDocument -panDocument')
+      .select('-aadharDocument -panDocument -aadharFrontWithSelfie -aadharBackWithSelfie')
       .populate('userId', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
