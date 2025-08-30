@@ -18,7 +18,9 @@ const userSchema = new mongoose.Schema({
     country: String,
     state: String,
     city: String
-  }
+  },
+  resetToken: { type: String },
+  resetTokenExpiry: { type: Date }
 }, { timestamps: true });
 
 userSchema.pre('save', async function(next) {
