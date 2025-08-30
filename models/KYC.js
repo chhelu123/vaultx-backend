@@ -7,7 +7,8 @@ const kycSchema = new mongoose.Schema({
   mobileNumber: { type: String, required: true },
   aadharNumber: { type: String, required: true },
   panNumber: { type: String, required: true },
-  aadharDocument: { type: String, required: true }, // Base64 or file path
+  aadharFrontWithSelfie: { type: String, required: true }, // Base64 selfie with front Aadhar
+  aadharBackWithSelfie: { type: String, required: true }, // Base64 selfie with back Aadhar
   panDocument: { type: String, required: true }, // Base64 or file path
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   adminNotes: { type: String },

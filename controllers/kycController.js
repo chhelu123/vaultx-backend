@@ -4,7 +4,7 @@ const User = require('../models/User');
 // Submit KYC documents
 exports.submitKYC = async (req, res) => {
   try {
-    const { fullName, dateOfBirth, mobileNumber, aadharNumber, panNumber, aadharDocument, panDocument } = req.body;
+    const { fullName, dateOfBirth, mobileNumber, aadharNumber, panNumber, aadharFrontWithSelfie, aadharBackWithSelfie, panDocument } = req.body;
     const userId = req.user.id;
 
     // Check if KYC already exists
@@ -21,7 +21,8 @@ exports.submitKYC = async (req, res) => {
       mobileNumber,
       aadharNumber,
       panNumber,
-      aadharDocument,
+      aadharFrontWithSelfie,
+      aadharBackWithSelfie,
       panDocument
     });
 
@@ -62,7 +63,7 @@ exports.getKYCStatus = async (req, res) => {
 // Update KYC documents (if rejected)
 exports.updateKYC = async (req, res) => {
   try {
-    const { fullName, dateOfBirth, mobileNumber, aadharNumber, panNumber, aadharDocument, panDocument } = req.body;
+    const { fullName, dateOfBirth, mobileNumber, aadharNumber, panNumber, aadharFrontWithSelfie, aadharBackWithSelfie, panDocument } = req.body;
     const userId = req.user.id;
 
     const kyc = await KYC.findOne({ userId });
@@ -76,7 +77,8 @@ exports.updateKYC = async (req, res) => {
     kyc.mobileNumber = mobileNumber;
     kyc.aadharNumber = aadharNumber;
     kyc.panNumber = panNumber;
-    kyc.aadharDocument = aadharDocument;
+    kyc.aadharFrontWithSelfie = aadharFrontWithSelfie;
+    kyc.aadharBackWithSelfie = aadharBackWithSelfie;
     kyc.panDocument = panDocument;
     kyc.status = 'pending';
     kyc.submittedAt = new Date();
