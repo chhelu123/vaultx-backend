@@ -12,9 +12,15 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
     
-    const existingUser = await User.findOne({ email });
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email and password are required' });
+    }
+    
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: 'An account with this email already exists. Please login instead.' });
     }
 
     // Get user IP address (handle proxies and load balancers)
@@ -26,7 +32,7 @@ exports.register = async (req, res) => {
 
     const user = await User.create({ 
       name, 
-      email, 
+      email: normalizedEmail, 
       password,
       ipAddress
     });
@@ -46,9 +52,19 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    const user = await User.findOne({ email });
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+    
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      return res.status(401).json({ message: 'No account found with this email address' });
+    }
+    
+    if (!(await user.comparePassword(password))) {
+      return res.status(401).json({ message: 'Incorrect password. Please try again.' });
     }
 
     const token = generateToken(user._id);
@@ -69,14 +85,16 @@ exports.sendOTP = async (req, res) => {
       return res.status(400).json({ message: 'Email and name are required' });
     }
 
-    const existingUser = await User.findOne({ email });
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: 'An account with this email already exists. Please login instead.' });
     }
 
     // Rate limiting: Check recent OTP requests
     const recentOTP = await EmailOTP.findOne({
-      email,
+      email: normalizedEmail,
       createdAt: { $gte: new Date(Date.now() - 60 * 1000) } // 1 minute
     });
     
@@ -88,21 +106,21 @@ exports.sendOTP = async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
     // Delete any existing OTP for this email
-    await EmailOTP.deleteMany({ email });
+    await EmailOTP.deleteMany({ email: normalizedEmail });
     
     // Save new OTP
-    await EmailOTP.create({ email, otp });
+    await EmailOTP.create({ email: normalizedEmail, otp });
     
     // Send email
-    console.log('Attempting to send OTP to:', email);
-    const emailResult = await sendOTPEmail(email, otp);
+    console.log('Attempting to send OTP to:', normalizedEmail);
+    const emailResult = await sendOTPEmail(normalizedEmail, otp);
     
     if (!emailResult.success) {
       console.error('Email sending failed:', emailResult.error);
       return res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
     }
     
-    console.log('OTP sent successfully to:', email);
+    console.log('OTP sent successfully to:', normalizedEmail);
     
     res.json({ message: 'OTP sent successfully' });
   } catch (error) {
@@ -118,20 +136,22 @@ exports.verifyOTP = async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    const otpRecord = await EmailOTP.findOne({ email, verified: false });
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const otpRecord = await EmailOTP.findOne({ email: normalizedEmail, verified: false });
     
     if (!otpRecord) {
-      return res.status(400).json({ message: 'OTP not found or already used' });
+      return res.status(400).json({ message: 'Invalid OTP or OTP has already been used. Please request a new one.' });
     }
     
     if (otpRecord.expiresAt < new Date()) {
       await EmailOTP.deleteOne({ _id: otpRecord._id });
-      return res.status(400).json({ message: 'OTP has expired' });
+      return res.status(400).json({ message: 'OTP has expired. Please request a new one.' });
     }
     
     if (otpRecord.attempts >= 5) {
       await EmailOTP.deleteOne({ _id: otpRecord._id });
-      return res.status(400).json({ message: 'Too many attempts. Please request a new OTP' });
+      return res.status(400).json({ message: 'Too many incorrect attempts. Please request a new OTP.' });
     }
     
     const isValidOTP = await otpRecord.compareOTP(otp);
@@ -139,7 +159,8 @@ exports.verifyOTP = async (req, res) => {
     if (!isValidOTP) {
       otpRecord.attempts += 1;
       await otpRecord.save();
-      return res.status(400).json({ message: 'Invalid OTP' });
+      const remainingAttempts = 5 - otpRecord.attempts;
+      return res.status(400).json({ message: `Invalid OTP. ${remainingAttempts} attempts remaining.` });
     }
     
     // Mark OTP as verified
@@ -155,7 +176,7 @@ exports.verifyOTP = async (req, res) => {
 
     const user = await User.create({ 
       name, 
-      email, 
+      email: normalizedEmail, 
       password,
       ipAddress,
       emailVerified: true
@@ -192,9 +213,11 @@ exports.forgotPassword = async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'No account found with this email address' });
     }
 
     // Generate reset token
@@ -207,10 +230,10 @@ exports.forgotPassword = async (req, res) => {
     await user.save();
 
     // Send email
-    const emailResult = await sendPasswordResetEmail(email, resetToken);
+    const emailResult = await sendPasswordResetEmail(normalizedEmail, resetToken);
     
     if (!emailResult.success) {
-      return res.status(500).json({ message: 'Failed to send reset email' });
+      return res.status(500).json({ message: 'Failed to send password reset email. Please try again.' });
     }
     
     res.json({ message: 'Password reset email sent successfully' });
@@ -233,7 +256,7 @@ exports.resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired reset token' });
+      return res.status(400).json({ message: 'Invalid or expired reset link. Please request a new password reset.' });
     }
 
     // Update password
