@@ -168,22 +168,18 @@ exports.approveDeposit = async (req, res) => {
       if (deposit.type === 'usdt') {
         user.wallets.usdt += deposit.amount;
         await user.save();
-      } else if (deposit.type === 'inr') {
-        // INR deposit approved - this is a buy USDT request
-        // Find corresponding buy transaction and credit USDT
-        const buyTransaction = await Transaction.findOne({
-          userId: deposit.userId,
-          type: 'buy',
-          total: deposit.amount,
-          status: 'pending'
-        }).sort({ createdAt: -1 });
         
-        if (buyTransaction) {
-          buyTransaction.status = 'completed';
-          await buyTransaction.save();
-          
-          user.wallets.usdt += buyTransaction.amount;
-          await user.save();
+        // Create completed transaction record if this is a buy request
+        if (deposit.buyDetails) {
+          await Transaction.create({
+            userId: deposit.userId,
+            type: 'buy',
+            amount: deposit.amount,
+            price: deposit.buyDetails.rate,
+            total: deposit.buyDetails.inrAmount,
+            fee: 0,
+            status: 'completed'
+          });
         }
       }
     }
@@ -245,22 +241,18 @@ exports.processWithdrawal = async (req, res) => {
       if (withdrawal.type === 'usdt') {
         user.wallets.usdt -= withdrawal.amount;
         await user.save();
-      } else if (withdrawal.type === 'inr') {
-        // INR withdrawal approved - this is a sell USDT request
-        // Find corresponding sell transaction and deduct USDT
-        const sellTransaction = await Transaction.findOne({
-          userId: withdrawal.userId,
-          type: 'sell',
-          total: withdrawal.amount,
-          status: 'pending'
-        }).sort({ createdAt: -1 });
         
-        if (sellTransaction) {
-          sellTransaction.status = 'completed';
-          await sellTransaction.save();
-          
-          user.wallets.usdt -= sellTransaction.amount;
-          await user.save();
+        // Create completed transaction record if this is a sell request
+        if (withdrawal.sellDetails) {
+          await Transaction.create({
+            userId: withdrawal.userId,
+            type: 'sell',
+            amount: withdrawal.amount,
+            price: withdrawal.sellDetails.rate,
+            total: withdrawal.sellDetails.inrAmount,
+            fee: 0,
+            status: 'completed'
+          });
         }
       }
     }

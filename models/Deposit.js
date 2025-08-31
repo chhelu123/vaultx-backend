@@ -7,7 +7,12 @@ const depositSchema = new mongoose.Schema({
   status: { type: String, enum: ['pending', 'completed', 'rejected'], default: 'pending' },
   paymentMethod: { type: String, required: true },
   transactionId: { type: String },
-  adminNotes: { type: String }
+  adminNotes: { type: String },
+  buyDetails: {
+    inrAmount: Number,
+    rate: Number,
+    usdtAmount: Number
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Deposit', depositSchema);

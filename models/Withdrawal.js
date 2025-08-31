@@ -8,7 +8,12 @@ const withdrawalSchema = new mongoose.Schema({
   withdrawalDetails: { type: String, required: true }, // UPI ID or USDT address
   paymentMethod: { type: String },
   chain: { type: String, enum: ['trc20', 'bep20', 'aptos'], default: 'trc20' }, // For USDT withdrawals
-  adminNotes: { type: String }
+  adminNotes: { type: String },
+  sellDetails: {
+    usdtAmount: Number,
+    rate: Number,
+    inrAmount: Number
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Withdrawal', withdrawalSchema);

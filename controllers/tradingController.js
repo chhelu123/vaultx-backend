@@ -44,20 +44,25 @@ exports.buyUSDT = async (req, res) => {
     const prices = await getCurrentPrice();
     const usdtAmount = amount / prices.buy;
     
-    // Create pending transaction (admin will approve)
-    const transaction = await Transaction.create({
+    // Create USDT deposit request for admin approval
+    const Deposit = require('../models/Deposit');
+    const deposit = await Deposit.create({
       userId,
-      type: 'buy',
+      type: 'usdt',
       amount: usdtAmount,
-      price: prices.buy,
-      total: amount,
-      fee: 0,
-      status: 'pending' // Admin approval required
+      paymentMethod: 'Buy USDT',
+      transactionId: `BUY-${Date.now()}`,
+      status: 'pending',
+      buyDetails: {
+        inrAmount: amount,
+        rate: prices.buy,
+        usdtAmount: usdtAmount
+      }
     });
 
     res.json({
-      message: 'USDT purchase request submitted. Admin will approve and credit USDT to your wallet.',
-      transaction
+      message: `USDT purchase request submitted. You will receive ${usdtAmount.toFixed(6)} USDT after admin approval.`,
+      deposit
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -88,20 +93,26 @@ exports.sellUSDT = async (req, res) => {
     
     const prices = await getCurrentPrice();
     const inrAmount = amount * prices.sell;
-
-    const transaction = await Transaction.create({
+    
+    // Create USDT withdrawal request for admin approval
+    const Withdrawal = require('../models/Withdrawal');
+    const withdrawal = await Withdrawal.create({
       userId,
-      type: 'sell',
-      amount,
-      price: prices.sell,
-      total: inrAmount,
-      fee: 0,
-      status: 'pending' // Admin will approve and deduct USDT
+      type: 'usdt',
+      amount: amount,
+      paymentMethod: 'Sell USDT',
+      address: 'INR Payout',
+      status: 'pending',
+      sellDetails: {
+        usdtAmount: amount,
+        rate: prices.sell,
+        inrAmount: inrAmount
+      }
     });
 
     res.json({
-      message: 'USDT sell request submitted. Admin will approve and process payment.',
-      transaction
+      message: `USDT sell request submitted. You will receive ₹${inrAmount.toFixed(2)} after admin approval.`,
+      withdrawal
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
