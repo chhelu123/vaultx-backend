@@ -1,10 +1,12 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const Counter = require('./Counter');
 
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true },
   name: { type: String, required: true },
+  userNumber: { type: Number, unique: true },
   isVerified: { type: Boolean, default: false },
   emailVerified: { type: Boolean, default: false },
   wallets: {
@@ -26,6 +28,23 @@ const userSchema = new mongoose.Schema({
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);
+  next();
+});
+
+// Auto-increment userNumber
+userSchema.pre('save', async function(next) {
+  if (this.isNew && !this.userNumber) {
+    try {
+      const counter = await Counter.findByIdAndUpdate(
+        'user_id',
+        { $inc: { sequence_value: 1 } },
+        { new: true, upsert: true }
+      );
+      this.userNumber = counter.sequence_value;
+    } catch (error) {
+      return next(error);
+    }
+  }
   next();
 });
 
