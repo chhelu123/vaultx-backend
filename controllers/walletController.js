@@ -72,7 +72,7 @@ exports.getDeposits = async (req, res) => {
 
 exports.requestWithdrawal = async (req, res) => {
   try {
-    const { type, amount, withdrawalDetails } = req.body;
+    const { type, amount, withdrawalDetails, chain } = req.body;
     const userId = req.user.id;
 
     const user = await User.findById(userId);
@@ -80,12 +80,19 @@ exports.requestWithdrawal = async (req, res) => {
       return res.status(400).json({ message: `Insufficient ${type.toUpperCase()} balance` });
     }
 
-    const withdrawal = await Withdrawal.create({
+    const withdrawalData = {
       userId,
       type,
       amount,
       withdrawalDetails
-    });
+    };
+
+    // Add chain for USDT withdrawals
+    if (type === 'usdt' && chain) {
+      withdrawalData.chain = chain;
+    }
+
+    const withdrawal = await Withdrawal.create(withdrawalData);
 
     res.json({
       message: 'Withdrawal request submitted successfully',
