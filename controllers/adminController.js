@@ -101,14 +101,13 @@ exports.getAllUsers = async (req, res) => {
 exports.updateUserWallet = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { inr, usdt } = req.body;
+    const { usdt } = req.body;
     
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
     
-    user.wallets.inr = inr;
     user.wallets.usdt = usdt;
     await user.save();
     
@@ -166,8 +165,27 @@ exports.approveDeposit = async (req, res) => {
     
     if (status === 'completed') {
       const user = await User.findById(deposit.userId);
-      user.wallets[deposit.type] += deposit.amount;
-      await user.save();
+      if (deposit.type === 'usdt') {
+        user.wallets.usdt += deposit.amount;
+        await user.save();
+      } else if (deposit.type === 'inr') {
+        // INR deposit approved - this is a buy USDT request
+        // Find corresponding buy transaction and credit USDT
+        const buyTransaction = await Transaction.findOne({
+          userId: deposit.userId,
+          type: 'buy',
+          total: deposit.amount,
+          status: 'pending'
+        }).sort({ createdAt: -1 });
+        
+        if (buyTransaction) {
+          buyTransaction.status = 'completed';
+          await buyTransaction.save();
+          
+          user.wallets.usdt += buyTransaction.amount;
+          await user.save();
+        }
+      }
     }
     
     res.json({ message: 'Deposit updated successfully', deposit });
@@ -224,8 +242,27 @@ exports.processWithdrawal = async (req, res) => {
     
     if (status === 'completed') {
       const user = await User.findById(withdrawal.userId);
-      user.wallets[withdrawal.type] -= withdrawal.amount;
-      await user.save();
+      if (withdrawal.type === 'usdt') {
+        user.wallets.usdt -= withdrawal.amount;
+        await user.save();
+      } else if (withdrawal.type === 'inr') {
+        // INR withdrawal approved - this is a sell USDT request
+        // Find corresponding sell transaction and deduct USDT
+        const sellTransaction = await Transaction.findOne({
+          userId: withdrawal.userId,
+          type: 'sell',
+          total: withdrawal.amount,
+          status: 'pending'
+        }).sort({ createdAt: -1 });
+        
+        if (sellTransaction) {
+          sellTransaction.status = 'completed';
+          await sellTransaction.save();
+          
+          user.wallets.usdt -= sellTransaction.amount;
+          await user.save();
+        }
+      }
     }
     
     res.json({ message: 'Withdrawal updated successfully', withdrawal });
