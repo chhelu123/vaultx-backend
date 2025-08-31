@@ -225,9 +225,10 @@ exports.forgotPassword = async (req, res) => {
     const resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     // Save token to user
-    user.resetToken = resetToken;
-    user.resetTokenExpiry = resetTokenExpiry;
-    await user.save();
+    await User.findByIdAndUpdate(user._id, {
+      resetToken: resetToken,
+      resetTokenExpiry: resetTokenExpiry
+    });
 
     // Send email
     const emailResult = await sendPasswordResetEmail(normalizedEmail, resetToken);
