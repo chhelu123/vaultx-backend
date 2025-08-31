@@ -101,7 +101,7 @@ exports.sellUSDT = async (req, res) => {
       type: 'usdt',
       amount: amount,
       paymentMethod: 'Sell USDT',
-      address: 'INR Payout',
+      withdrawalDetails: 'INR Payout',
       status: 'pending',
       sellDetails: {
         usdtAmount: amount,
