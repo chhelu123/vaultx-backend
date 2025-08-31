@@ -62,6 +62,11 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/kyc', kycRoutes);
 app.use('/api/settings', require('./routes/settings'));
 
+// Debug route
+app.get('/api/auth/test', (req, res) => {
+  res.json({ message: 'Auth routes working' });
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
