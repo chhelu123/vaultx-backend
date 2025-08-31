@@ -67,6 +67,17 @@ app.get('/api/auth/test', (req, res) => {
   res.json({ message: 'Auth routes working' });
 });
 
+// Debug users
+app.get('/api/debug/users', async (req, res) => {
+  try {
+    const User = require('./models/User');
+    const users = await User.find({}, 'email userNumber createdAt').limit(10);
+    res.json({ users, count: users.length });
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
