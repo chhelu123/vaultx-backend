@@ -25,11 +25,11 @@ exports.getPrice = async (req, res) => {
 
 exports.buyUSDT = async (req, res) => {
   try {
-    const { amount } = req.body; // INR amount user wants to spend
+    const { inrAmount, usdtAmount, paymentMethod, transactionId } = req.body;
     const userId = req.user.id;
     
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ message: 'Invalid amount' });
+    if (!inrAmount || inrAmount <= 0 || !usdtAmount || !transactionId) {
+      return res.status(400).json({ message: 'Invalid request data' });
     }
     
     const user = await User.findById(userId);
@@ -42,7 +42,6 @@ exports.buyUSDT = async (req, res) => {
     }
     
     const prices = await getCurrentPrice();
-    const usdtAmount = amount / prices.buy;
     
     // Create USDT deposit request for admin approval
     const Deposit = require('../models/Deposit');
@@ -50,11 +49,11 @@ exports.buyUSDT = async (req, res) => {
       userId,
       type: 'usdt',
       amount: usdtAmount,
-      paymentMethod: 'Buy USDT',
-      transactionId: `BUY-${Date.now()}`,
+      paymentMethod: paymentMethod || 'UPI',
+      transactionId: transactionId, // User's actual transaction ID
       status: 'pending',
       buyDetails: {
-        inrAmount: amount,
+        inrAmount: inrAmount,
         rate: prices.buy,
         usdtAmount: usdtAmount
       }
@@ -71,11 +70,11 @@ exports.buyUSDT = async (req, res) => {
 
 exports.sellUSDT = async (req, res) => {
   try {
-    const { amount } = req.body; // USDT amount user wants to sell
+    const { usdtAmount, paymentMethod, paymentDetails } = req.body;
     const userId = req.user.id;
     
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ message: 'Invalid amount' });
+    if (!usdtAmount || usdtAmount <= 0 || !paymentDetails) {
+      return res.status(400).json({ message: 'Invalid request data' });
     }
     
     const user = await User.findById(userId);
@@ -87,24 +86,24 @@ exports.sellUSDT = async (req, res) => {
       return res.status(403).json({ message: 'KYC verification required to trade' });
     }
     
-    if (user.wallets.usdt < amount) {
+    if (user.wallets.usdt < usdtAmount) {
       return res.status(400).json({ message: `Insufficient USDT balance. You have ${user.wallets.usdt} USDT` });
     }
     
     const prices = await getCurrentPrice();
-    const inrAmount = amount * prices.sell;
+    const inrAmount = usdtAmount * prices.sell;
     
     // Create USDT withdrawal request for admin approval
     const Withdrawal = require('../models/Withdrawal');
     const withdrawal = await Withdrawal.create({
       userId,
       type: 'usdt',
-      amount: amount,
-      paymentMethod: 'Sell USDT',
-      withdrawalDetails: 'INR Payout',
+      amount: usdtAmount,
+      paymentMethod: paymentMethod || 'UPI',
+      withdrawalDetails: paymentDetails, // User's payment details
       status: 'pending',
       sellDetails: {
-        usdtAmount: amount,
+        usdtAmount: usdtAmount,
         rate: prices.sell,
         inrAmount: inrAmount
       }
