@@ -2,6 +2,7 @@ const express = require('express');
 const Settings = require('../models/Settings');
 const router = express.Router();
 
+// Get settings (public)
 router.get('/', async (req, res) => {
   try {
     let settings = await Settings.findOne();
