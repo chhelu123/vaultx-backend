@@ -9,8 +9,8 @@ const getCurrentPrice = async () => {
     settings = await Settings.create({});
   }
   return {
-    buy: settings.buyPrice,
-    sell: settings.sellPrice
+    buy: settings.buyRate || 92,
+    sell: settings.sellRate || 89
   };
 };
 
