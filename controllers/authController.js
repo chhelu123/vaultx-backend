@@ -208,14 +208,18 @@ exports.getProfile = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
+    console.log('Forgot password request for:', email);
     
     if (!email) {
       return res.status(400).json({ message: 'Email is required' });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    console.log('Normalized email:', normalizedEmail);
 
     const user = await User.findOne({ email: normalizedEmail });
+    console.log('User found:', user ? 'Yes' : 'No');
+    
     if (!user) {
       return res.status(404).json({ message: 'No account found with this email address' });
     }
@@ -223,22 +227,29 @@ exports.forgotPassword = async (req, res) => {
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    console.log('Generated reset token for user:', user._id);
 
     // Save token to user
     await User.findByIdAndUpdate(user._id, {
       resetToken: resetToken,
       resetTokenExpiry: resetTokenExpiry
     });
+    console.log('Reset token saved to database');
 
     // Send email
+    console.log('Attempting to send password reset email...');
     const emailResult = await sendPasswordResetEmail(normalizedEmail, resetToken);
+    console.log('Email result:', emailResult);
     
     if (!emailResult.success) {
+      console.error('Email sending failed:', emailResult.error);
       return res.status(500).json({ message: 'Failed to send password reset email. Please try again.' });
     }
     
+    console.log('Password reset email sent successfully');
     res.json({ message: 'Password reset email sent successfully' });
   } catch (error) {
+    console.error('Forgot password error:', error);
     res.status(500).json({ message: error.message });
   }
 };
