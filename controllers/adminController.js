@@ -166,21 +166,28 @@ exports.approveDeposit = async (req, res) => {
     if (status === 'completed') {
       const user = await User.findById(deposit.userId);
       if (deposit.type === 'usdt') {
+        // Always credit USDT to user wallet
         user.wallets.usdt += deposit.amount;
         await user.save();
         
-        // Create completed transaction record if this is a buy request
+        // Only create transaction record for trading deposits (buy USDT)
         if (deposit.buyDetails) {
-          await Transaction.create({
-            userId: deposit.userId,
-            type: 'buy',
-            amount: deposit.amount,
-            price: deposit.buyDetails.rate,
-            total: deposit.buyDetails.inrAmount,
-            fee: 0,
-            status: 'completed'
-          });
+          try {
+            await Transaction.create({
+              userId: deposit.userId,
+              type: 'buy',
+              amount: deposit.amount,
+              price: deposit.buyDetails.rate,
+              total: deposit.buyDetails.inrAmount,
+              fee: 0,
+              status: 'completed'
+            });
+          } catch (transactionError) {
+            console.error('Failed to create buy transaction record:', transactionError);
+            // Don't throw error - wallet was already credited successfully
+          }
         }
+        // Regular USDT deposits don't need transaction records
       }
     }
     
@@ -239,21 +246,28 @@ exports.processWithdrawal = async (req, res) => {
     if (status === 'completed') {
       const user = await User.findById(withdrawal.userId);
       if (withdrawal.type === 'usdt') {
+        // Always deduct USDT from user wallet
         user.wallets.usdt -= withdrawal.amount;
         await user.save();
         
-        // Create completed transaction record if this is a sell request
+        // Only create transaction record for trading withdrawals (sell USDT)
         if (withdrawal.sellDetails) {
-          await Transaction.create({
-            userId: withdrawal.userId,
-            type: 'sell',
-            amount: withdrawal.amount,
-            price: withdrawal.sellDetails.rate,
-            total: withdrawal.sellDetails.inrAmount,
-            fee: 0,
-            status: 'completed'
-          });
+          try {
+            await Transaction.create({
+              userId: withdrawal.userId,
+              type: 'sell',
+              amount: withdrawal.amount,
+              price: withdrawal.sellDetails.rate,
+              total: withdrawal.sellDetails.inrAmount,
+              fee: 0,
+              status: 'completed'
+            });
+          } catch (transactionError) {
+            console.error('Failed to create sell transaction record:', transactionError);
+            // Don't throw error - wallet was already debited successfully
+          }
         }
+        // Regular USDT withdrawals don't need transaction records
       }
     }
     
